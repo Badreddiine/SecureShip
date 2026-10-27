@@ -1,0 +1,25 @@
+# kind cluster: 1 control-plane + 2 workers
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: secureship
+
+# On a slow machine kubeadm gives up after 60 s by default, while the
+# control-plane needs ~70 s to start with 3 nodes booting at the same time.
+kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    apiVersion: kubeadm.k8s.io/v1beta4
+    timeouts:
+      kubernetesAPICall: 5m0s
+      controlPlaneComponentHealthCheck: 10m0s
+      kubeletHealthCheck: 5m0s
+
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # host:8080 -> NodePort 30080 (Service "api")
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+  - role: worker
+  - role: worker

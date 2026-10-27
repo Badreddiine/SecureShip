@@ -1,0 +1,38 @@
+# Build output (rebuilt inside the image)
+target/
+build/
+out/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Docker files (not needed inside the image)
+Dockerfile*
+docker-compose*.yml
+compose*.yaml
+.dockerignore
+
+# Logs and local files
+*.log
+build.log
+HELP.md
+
+# Secrets and local config: never copy into an image
+.env
+.env.*
+*.pem
+*.key
+
+# Frontend / misc
+node_modules/
+frontend/
+nginx/

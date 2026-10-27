@@ -1,0 +1,39 @@
+# Job: runs ONCE to completion (database migration)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: secureship
+spec:
+  backoffLimit: 4                  # retries before the Job is marked Failed
+  ttlSecondsAfterFinished: 3600    # auto-cleanup 1h after it finishes
+  template:
+    spec:
+      restartPolicy: OnFailure     # a Job pod must be Never or OnFailure
+      containers:
+        - name: migrate
+          image: postgres:16-alpine
+          command: ["sh", "-c"]
+          args:
+            - |
+              until pg_isready -h postgres -U "$PGUSER" -d "$PGDATABASE"; do
+                echo "waiting for postgres..."; sleep 2
+              done
+              psql -v ON_ERROR_STOP=1 -h postgres -f /migrations/001-init.sql
+          env:
+            - name: PGDATABASE
+              valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_DB } }
+            - name: PGUSER
+              valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_USER } }
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_PASSWORD } }
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+          resources:
+            requests: { cpu: 50m, memory: 32Mi }
+            limits: { memory: 128Mi }
+      volumes:
+        - name: migrations
+          configMap:
+            name: db-migrations

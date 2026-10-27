@@ -1,0 +1,10 @@
+﻿spec:
+  template:
+    spec:
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: frontend
+          configMap:
+            name: frontend-html

@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    volumes:
+      - ./:/app
+      - maven-cache:/root/.m2
+    ports:
+      - "8080:8080"
+
+volumes:
+  maven-cache:

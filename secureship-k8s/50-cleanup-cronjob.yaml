@@ -1,0 +1,34 @@
+# CronJob: creates a Job on a schedule
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: parcels-cleanup
+  namespace: secureship
+spec:
+  schedule: "*/5 * * * *"          # every 5 min for the demo (real life: "0 3 * * *" = 3am daily)
+  concurrencyPolicy: Forbid        # no overlapping runs
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cleanup
+              image: postgres:16-alpine
+              command: ["sh", "-c"]
+              args:
+                - |
+                  psql -v ON_ERROR_STOP=1 -h postgres -c "DELETE FROM parcels WHERE status = 'CANCELLED';"
+              env:
+                - name: PGDATABASE
+                  valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_DB } }
+                - name: PGUSER
+                  valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_USER } }
+                - name: PGPASSWORD
+                  valueFrom: { secretKeyRef: { name: secureship-secrets, key: POSTGRES_PASSWORD } }
+              resources:
+                requests: { cpu: 50m, memory: 32Mi }
+                limits: { memory: 128Mi }
